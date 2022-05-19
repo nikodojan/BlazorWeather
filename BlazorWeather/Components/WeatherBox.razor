@@ -1,0 +1,104 @@
+﻿@using BlazorWeather.Services
+@inject OpenWeatherService WeatherService;
+
+
+<div class="col body @BgCss">
+    <input class="search" 
+        type="search" 
+        @bind-value=@SearchValue 
+        @bind-value:event="oninput" 
+        @onchange=@GetWeather
+        placeholder="Search"></input>
+
+    <div class="row pt-2">
+        <div class="city">
+            @if (Weather == null)
+            {
+                <div>Enter a city name</div>
+            }
+            else
+            {
+                if(Weather.Cod == 200)
+                {
+                    <div>@Weather.Name, @Weather.Sys.Country</div>
+                }
+                else
+                {
+                    <div>City not found.</div>
+                }
+
+            }
+        </div>
+    </div>
+    <div class="row justify-content-end">
+        <div class="icon">
+            <img src=@IconSrc alt="Weather"/>
+        </div>
+        <div class="weather">
+            @{
+                var temp = Weather != null ? Weather.Main.Temp.ToString("F0") : "0" ;
+                var cond = Weather != null ? Weather.Weather[0].Main : "Clear" ;
+
+                <div class="temp">@temp°C</div>
+                <div class="condition">@cond</div>
+            }
+        </div>
+
+    </div>
+
+</div>
+
+@code {
+    private string SearchValue { get; set; } = "";
+    public WeatherApiResponse Weather { get; set; } = null;
+    private string BgCss = "Clear";
+    private string IconSrc { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Weather = await WeatherService.GetWeather("Copenhagen");
+        IconSrc = $"http://openweathermap.org/img/wn/{Weather.Weather[0].Icon}@2x.png";
+        BgCss = CssClass(Weather.Weather[0].Main, Weather.Main.Temp);
+    }
+
+
+    private async Task GetWeather()
+    {
+        if (!string.IsNullOrWhiteSpace(SearchValue))
+        {
+            var weather = await WeatherService.GetWeather(SearchValue);
+
+            if(weather.Cod == 200)
+            {
+                Weather = weather;
+                IconSrc = $"http://openweathermap.org/img/wn/{Weather.Weather[0].Icon}@2x.png";
+                BgCss = CssClass(Weather.Weather[0].Main, Weather.Main.Temp);
+            }
+            else
+            {
+                Weather.Name = "Not found";
+                Weather.Sys.Country = string.Empty;
+            }
+
+            SearchValue = string.Empty;
+        }
+
+    }
+
+    private string CssClass(string cond, double temp)
+    {
+        switch (cond, temp)
+        {
+            case ("Clear", <=25.0):
+                return "clear";
+            case ("Clear", >25.0):
+                return "hot-sun";
+            case ("Clouds", >-70.0):
+                return "clouds";
+            case ("Rain" or "Snow", >-70.0):
+                return "rain";
+            default:
+                return "clear";
+        }
+    }
+}
