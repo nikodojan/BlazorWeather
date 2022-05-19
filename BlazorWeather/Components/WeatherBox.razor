@@ -1,14 +1,21 @@
 ﻿@using BlazorWeather.Services
 @inject OpenWeatherService WeatherService;
+@inject IJSRuntime JsInterop;
 
 
 <div class="col body @BgCss">
-    <input class="search" 
+    <div class="search-row">
+        <input class="search" 
         type="search" 
         @bind-value=@SearchValue 
         @bind-value:event="oninput" 
-        @onchange=@GetWeather
+        @onchange=@GetWeatherByName
         placeholder="Search"></input>
+        <div class="geo" @onclick=@GetWeatherByCoords>
+            <img src="geo-alt.svg" alt="Use location" />
+        </div>
+    </div>
+    
 
     <div class="row pt-2">
         <div class="city">
@@ -56,33 +63,37 @@
 
     protected override async Task OnInitializedAsync()
     {
-        Weather = await WeatherService.GetWeather("Copenhagen");
-        IconSrc = $"http://openweathermap.org/img/wn/{Weather.Weather[0].Icon}@2x.png";
-        BgCss = CssClass(Weather.Weather[0].Main, Weather.Main.Temp);
+
+        await GetWeatherByCoords();
     }
 
-
-    private async Task GetWeather()
+    private async Task GetWeatherByName()
     {
         if (!string.IsNullOrWhiteSpace(SearchValue))
         {
-            var weather = await WeatherService.GetWeather(SearchValue);
+            var weather = await WeatherService.GetWeatherByName(SearchValue);
+            SetCurrentWeather(weather);
+        }
+    }
 
-            if(weather.Cod == 200)
-            {
-                Weather = weather;
-                IconSrc = $"http://openweathermap.org/img/wn/{Weather.Weather[0].Icon}@2x.png";
-                BgCss = CssClass(Weather.Weather[0].Main, Weather.Main.Temp);
-            }
-            else
-            {
-                Weather.Name = "Not found";
-                Weather.Sys.Country = string.Empty;
-            }
+    private async Task GetWeatherByCoords()
+    {
+        var coords = await GetLocation();
+        Console.WriteLine($"{coords.Lat} {coords.Lon}");
+        var weather = await WeatherService.GetWeatherByCoords(coords.Lat.ToString(), coords.Lon.ToString());
+        SetCurrentWeather(weather);
+    }
 
-            SearchValue = string.Empty;
+    private void SetCurrentWeather(WeatherApiResponse weather)
+    {        
+        if (weather.Cod == 200)
+        {
+            Weather = weather;
+            IconSrc = $"http://openweathermap.org/img/wn/{weather.Weather[0].Icon}@2x.png";
+            BgCss = CssClass(weather.Weather[0].Main, weather.Main.Temp);
         }
 
+        SearchValue = string.Empty;
     }
 
     private string CssClass(string cond, double temp)
@@ -100,5 +111,11 @@
             default:
                 return "clear";
         }
+    }
+
+    private async Task<Coord> GetLocation()
+    {
+        var coords = await JsInterop.InvokeAsync<Coord>("getloc");
+        return coords;
     }
 }
