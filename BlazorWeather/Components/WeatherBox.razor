@@ -15,7 +15,7 @@
             <img src="geo-alt.svg" alt="Use location" />
         </div>
     </div>
-    
+
 
     <div class="row pt-2">
         <div class="city">
@@ -37,6 +37,7 @@
             }
         </div>
     </div>
+
     <div class="row justify-content-end">
         <div class="icon">
             <img src=@IconSrc alt="Weather"/>
@@ -46,12 +47,22 @@
                 var temp = Weather != null ? Weather.Main.Temp.ToString("F0") : "0" ;
                 var cond = Weather != null ? Weather.Weather[0].Main : "Clear" ;
 
-                <div class="temp">@temp°C</div>
-                <div class="condition">@cond</div>
+                   
+                                            <div class="temp">@temp°C</div>
+                                            <div class="condition">@cond</div>
+
+                        
             }
         </div>
 
+        <div class="date-row">
+            <div class="date">
+                @DateTime.Now.ToString("dd. MMMM yyyy HH:mm")
+            </div>
+        </div>
+
     </div>
+        
 
 </div>
 
