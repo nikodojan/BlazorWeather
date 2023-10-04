@@ -7,7 +7,7 @@ namespace BlazorWeather.Services
 {
     public class OpenWeatherService
     {
-        private const string ApiKey = "629c2330ea97fc0152bdfc4100f0c0ac";
+        private const string ApiKey = "";
         private HttpClient _http;      
 
         public OpenWeatherService(HttpClient http)
